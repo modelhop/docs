@@ -1,0 +1,43 @@
+{
+  "title": "ModelHop",
+  "logo": {
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg"
+  },
+  "navigation": [
+    {
+      "group": "Overview",
+      "pages": [
+        { "title": "Introduction", "slug": "/", "file": "index.md" }
+      ]
+    },
+    {
+      "group": "Getting Started",
+      "pages": [
+        { "title": "Installation", "slug": "/getting-started/installation", "file": "getting-started/installation.md" },
+        { "title": "Shell Aliases", "slug": "/getting-started/aliases", "file": "getting-started/aliases.md" },
+        { "title": "Account Management", "slug": "/getting-started/accounts", "file": "getting-started/accounts.md" }
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        { "title": "Layers", "slug": "/guides/layers", "file": "guides/layers.md" },
+        { "title": "Headroom Integration", "slug": "/guides/headroom", "file": "guides/headroom.md" }
+      ]
+    },
+    {
+      "group": "Reference",
+      "pages": [
+        { "title": "Configuration", "slug": "/reference/config", "file": "reference/config.md" },
+        { "title": "Status API", "slug": "/reference/api", "file": "reference/api.md" },
+        { "title": "Architecture", "slug": "/reference/architecture", "file": "reference/architecture.md" }
+      ]
+    }
+  ],
+  "footer": {
+    "links": [
+      { "title": "GitHub", "url": "https://github.com/modelhop/modelhop" }
+    ]
+  }
+}
