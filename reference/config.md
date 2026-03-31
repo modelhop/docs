@@ -34,6 +34,16 @@ ModelHop is configured via `config.json` in the project root and environment var
 | `name` | string | yes | Display name for logs and status |
 | `url` | string | yes | Layer's URL (e.g. `http://127.0.0.1:8787`) |
 | `enabled` | boolean | yes | Whether to route through this layer |
+| `autostart` | object | no | Auto-start config (see below) |
+
+### Autostart object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `command` | string | yes | Shell command to start the layer process |
+| `healthcheck` | string | no | URL to poll for readiness (defaults to layer `url`) |
+| `log` | string | no | Log file path (defaults to `/tmp/{name}.log`) |
+| `pid` | string | no | PID file path (defaults to `/tmp/{name}.pid`) |
 
 ## Environment variables
 
@@ -78,7 +88,13 @@ This reloads without dropping active connections.
     {
       "name": "headroom",
       "url": "http://127.0.0.1:8787",
-      "enabled": true
+      "enabled": true,
+      "autostart": {
+        "command": "headroom proxy --port 8787 --no-telemetry",
+        "healthcheck": "http://127.0.0.1:8787/health",
+        "log": "/tmp/headroom.log",
+        "pid": "/tmp/headroom.pid"
+      }
     },
     {
       "name": "request-logger",

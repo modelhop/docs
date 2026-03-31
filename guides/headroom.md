@@ -21,22 +21,69 @@ ModelHop handles account rotation. Headroom compresses the request context. The 
 ## Install Headroom
 
 ```bash
-pip install headroom
+pipx install "headroom-ai[proxy]"
 ```
 
-Or with pipx (recommended):
+This installs the `headroom` CLI with proxy support. Requires Python 3.10+.
 
-```bash
-pipx install headroom
+> **Note**: The package name on PyPI is `headroom-ai`, not `headroom`. The CLI command is `headroom`.
+
+## Configure ModelHop
+
+Add Headroom as a layer with autostart in `config.json`:
+
+```json
+{
+  "port": 4080,
+  "target": "https://api.anthropic.com",
+  "layers": [
+    {
+      "name": "headroom",
+      "url": "http://127.0.0.1:8787",
+      "enabled": true,
+      "autostart": {
+        "command": "headroom proxy --port 8787 --no-telemetry",
+        "healthcheck": "http://127.0.0.1:8787/health",
+        "log": "/tmp/headroom.log",
+        "pid": "/tmp/headroom.pid"
+      }
+    }
+  ]
+}
 ```
 
-## Start Headroom
+That's it. The next time you run `cc` (or any ModelHop alias), Headroom starts automatically if it's not already running.
+
+## Autostart behavior
+
+When you run `cc`, the ModelHop launcher:
+
+1. Checks if Headroom is responding on its healthcheck URL
+2. If not, starts it using the `autostart.command`
+3. Waits up to 10 seconds for the healthcheck to pass
+4. Then starts the ModelHop proxy (which routes through Headroom)
+5. Finally launches Claude Code
+
+On subsequent runs, both processes are already running — startup is instant.
+
+### Autostart fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `command` | yes | Shell command to start the layer |
+| `healthcheck` | no | URL to poll for readiness (defaults to layer `url`) |
+| `log` | no | Log file path (defaults to `/tmp/{name}.log`) |
+| `pid` | no | PID file path (defaults to `/tmp/{name}.pid`) |
+
+## Manual start (optional)
+
+If you prefer to manage Headroom yourself instead of using autostart:
 
 ```bash
 headroom proxy --port 8787
 ```
 
-Headroom listens on port 8787 by default and forwards to `api.anthropic.com`.
+Remove the `autostart` block from config.json — ModelHop will still route through Headroom when it's running, and the proxy will return a 502 if it's not.
 
 ### Headroom options
 
@@ -49,30 +96,12 @@ headroom proxy --port 8787 --no-optimize
 
 # With structured logging
 headroom proxy --port 8787 --log-file /tmp/headroom.jsonl
-```
 
-## Configure ModelHop
+# With persistent memory
+headroom proxy --port 8787 --memory
 
-Add Headroom as a layer in `config.json`:
-
-```json
-{
-  "port": 4080,
-  "target": "https://api.anthropic.com",
-  "layers": [
-    {
-      "name": "headroom",
-      "url": "http://127.0.0.1:8787",
-      "enabled": true
-    }
-  ]
-}
-```
-
-Reload ModelHop to pick up the change:
-
-```bash
-kill -HUP $(lsof -ti:4080)
+# With traffic learning (extracts error patterns)
+headroom proxy --port 8787 --learn
 ```
 
 ## Verify the chain
@@ -102,36 +131,22 @@ This adds three tools:
 | `headroom_retrieve` | Fetch original uncompressed content by hash |
 | `headroom_stats` | Session statistics (compressions, savings, costs) |
 
-## Headroom wrapper mode
-
-Headroom can also wrap Claude Code directly (bypassing ModelHop). Use this only if you want Headroom without multi-account rotation:
-
-```bash
-headroom wrap claude
-```
-
-With ModelHop, you don't need this — the layer integration gives you both compression and account rotation.
-
 ## Monitoring
 
-Check Headroom's compression stats:
-
 ```bash
+# View Headroom logs
+tail -f /tmp/headroom.log
+
 # Headroom health
 curl http://127.0.0.1:8787/health
 
 # Detailed stats
 curl http://127.0.0.1:8787/stats
-
-# Prometheus metrics
-curl http://127.0.0.1:8787/metrics
 ```
 
 ## Disabling Headroom
 
-To temporarily disable without stopping Headroom:
-
-Edit `config.json`:
+Set `"enabled": false` in config.json:
 
 ```json
 {
@@ -139,16 +154,17 @@ Edit `config.json`:
     {
       "name": "headroom",
       "url": "http://127.0.0.1:8787",
-      "enabled": false
+      "enabled": false,
+      "autostart": { "..." : "..." }
     }
   ]
 }
 ```
 
-Reload:
+Reload the proxy:
 
 ```bash
 kill -HUP $(lsof -ti:4080)
 ```
 
-ModelHop will skip Headroom and send requests directly to the API.
+ModelHop will skip Headroom and send requests directly to the API. The `autostart` config is ignored when `enabled` is false.

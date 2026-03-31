@@ -49,6 +49,33 @@ Toggle a layer by setting `"enabled": true` or `false`. Reload without restart:
 kill -HUP $(lsof -ti:4080)
 ```
 
+## Autostart
+
+Layers can be started automatically when you launch Claude Code via the `modelhop` launcher. Add an `autostart` block to any layer:
+
+```json
+{
+  "name": "headroom",
+  "url": "http://127.0.0.1:8787",
+  "enabled": true,
+  "autostart": {
+    "command": "headroom proxy --port 8787 --no-telemetry",
+    "healthcheck": "http://127.0.0.1:8787/health",
+    "log": "/tmp/headroom.log",
+    "pid": "/tmp/headroom.pid"
+  }
+}
+```
+
+The launcher checks the healthcheck URL before each session. If the layer isn't responding, it starts it and waits for readiness. Layers with `"enabled": false` are not auto-started.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `command` | yes | Shell command to start the layer |
+| `healthcheck` | no | URL to poll for readiness (defaults to the layer's `url`) |
+| `log` | no | Log file path (defaults to `/tmp/{name}.log`) |
+| `pid` | no | PID file path (defaults to `/tmp/{name}.pid`) |
+
 ## Layer requirements
 
 Each layer must:
