@@ -131,17 +131,45 @@ This adds three tools:
 | `headroom_retrieve` | Fetch original uncompressed content by hash |
 | `headroom_stats` | Session statistics (compressions, savings, costs) |
 
-## Monitoring
+## Monitoring savings
+
+Headroom tracks token savings, cost reduction, and cache hit rates. Use the shell alias for a quick summary:
 
 ```bash
-# View Headroom logs
-tail -f /tmp/headroom.log
+$ claude-proxy-savings
+Tokens saved: 7,409 (7.9%)
+Cost saved: $0.0149 + $0.6333 (cache)
+Requests: 7
+```
 
-# Headroom health
+### Full stats
+
+For detailed breakdown by model, compression layer, and request history:
+
+```bash
+curl -s http://127.0.0.1:8787/stats | python3 -m json.tool
+```
+
+Key fields in the response:
+
+| Path | Description |
+|------|-------------|
+| `tokens.saved` | Total tokens removed by compression |
+| `tokens.savings_percent` | Overall reduction percentage |
+| `cost.savings_usd` | Direct savings from compression |
+| `cost.cache_savings_usd` | Savings from improved prefix cache hit rates |
+| `cost.per_model` | Breakdown per model (opus, sonnet, haiku) |
+| `prefix_cache.totals.hit_rate` | Cache hit rate (Headroom's CacheAligner improves this) |
+| `savings.by_layer` | Breakdown: CLI filtering, compression, prefix cache |
+
+### Other endpoints
+
+```bash
+# Health check
 curl http://127.0.0.1:8787/health
 
-# Detailed stats
-curl http://127.0.0.1:8787/stats
+# View Headroom logs
+tail -f /tmp/headroom.log
 ```
 
 ## Disabling Headroom
